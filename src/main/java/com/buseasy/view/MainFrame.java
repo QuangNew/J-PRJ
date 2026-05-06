@@ -6,20 +6,26 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 
 import com.buseasy.controller.AuthController;
 import com.buseasy.controller.CartController;
 import com.buseasy.controller.HistoryController;
 import com.buseasy.controller.HomeController;
 import com.buseasy.controller.ProfileController;
+import com.buseasy.model.Reminder;
 import com.buseasy.model.User;
+import com.buseasy.service.ReminderService;
+import com.buseasy.util.DateUtil;
 import com.buseasy.view.auth.LoginPanel;
 import com.buseasy.view.auth.RegisterPanel;
 import com.buseasy.view.cart.CartPanel;
@@ -49,6 +55,9 @@ public class MainFrame extends JFrame {
     // These are created fresh every time the user logs in
     private JTabbedPane mainTabs;
     private AuthController authController;
+    private Timer reminderTimer;
+
+    private final ReminderService reminderService = new ReminderService();
 
     public MainFrame() {
         setTitle("BusEasy — Bus Ticket System");
@@ -84,7 +93,8 @@ public class MainFrame extends JFrame {
      * wires up all controllers, and switches to it.
      */
     public void showMainTabs(User user) {
-        // Remove any previous main tab panel before rebuilding
+        stopReminderTimer();
+
         if (mainTabs != null) {
             rootPanel.remove(mainTabs.getParent());
         }
@@ -147,6 +157,12 @@ public class MainFrame extends JFrame {
             cartTabComp.revalidate();
             cartTabComp.repaint();
         });
+        homeController.setCartBadgeUpdater(count -> {
+            cartBadge.setText(count > 0 ? String.valueOf(count) : "");
+            cartBadge.setVisible(count > 0);
+            cartTabComp.revalidate();
+            cartTabComp.repaint();
+        });
 
         // Reload data whenever the user switches to a tab
         mainTabs.addChangeListener(e -> onTabSwitched(
@@ -158,6 +174,7 @@ public class MainFrame extends JFrame {
         JButton logoutButton = new JButton("Logout");
         UiTheme.styleSecondaryButton(logoutButton);
         logoutButton.addActionListener(e -> {
+            stopReminderTimer();
             if (authController != null) {
                 authController.handleLogout();
             }
@@ -181,8 +198,9 @@ public class MainFrame extends JFrame {
         rootPanel.add(mainCard, CARD_MAIN);
         rootLayout.show(rootPanel, CARD_MAIN);
 
-        // Load initial data for the home tab
+        cartController.loadCart();
         homeController.loadMonth(java.time.YearMonth.now());
+        startReminderTimer(user);
     }
 
     // ----------------------------------------------------------------
@@ -221,6 +239,51 @@ public class MainFrame extends JFrame {
         this.authController = controller;
         loginPanel.setAuthController(controller);
         registerPanel.setAuthController(controller);
+    }
+
+    private void startReminderTimer(User user) {
+        reminderTimer = new Timer(60_000, e -> showDueReminders(user));
+        reminderTimer.setInitialDelay(1_000);
+        reminderTimer.start();
+    }
+
+    private void stopReminderTimer() {
+        if (reminderTimer == null) {
+            return;
+        }
+        reminderTimer.stop();
+        reminderTimer = null;
+    }
+
+    private void showDueReminders(User user) {
+        try {
+            List<Reminder> reminders = reminderService.getDueReminders(user.getId());
+            if (reminders.isEmpty()) {
+                return;
+            }
+            JOptionPane.showMessageDialog(
+                this,
+                buildReminderMessage(reminders),
+                "Trip Reminder",
+                JOptionPane.INFORMATION_MESSAGE);
+            reminderService.markDelivered(reminders);
+        } catch (RuntimeException e) {
+            System.err.println("Failed to load reminders: " + e.getMessage());
+        }
+    }
+
+    private String buildReminderMessage(List<Reminder> reminders) {
+        StringBuilder message = new StringBuilder("Your upcoming trips:\n\n");
+        for (Reminder reminder : reminders) {
+            message.append("• ")
+                .append(reminder.getTicket().getSchedule().getRoute())
+                .append(" — ")
+                .append(DateUtil.formatDateTime(reminder.getTicket().getSchedule().getDepartureTime()))
+                .append(" (")
+                .append(reminderService.formatOffsetLabel(reminder.getOffsetMinutes()))
+                .append(")\n");
+        }
+        return message.toString();
     }
 
     /** Reloads data for the tab the user just switched to. */

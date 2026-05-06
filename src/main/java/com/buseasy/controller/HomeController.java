@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.buseasy.model.BusSchedule;
 import com.buseasy.service.CartService;
@@ -20,10 +21,15 @@ public class HomeController {
 
     private final int       userId;
     private final HomePanel homePanel;
+    private Consumer<Integer> cartBadgeUpdater;
 
     public HomeController(int userId, HomePanel homePanel) {
         this.userId    = userId;
         this.homePanel = homePanel;
+    }
+
+    public void setCartBadgeUpdater(Consumer<Integer> cartBadgeUpdater) {
+        this.cartBadgeUpdater = cartBadgeUpdater;
     }
 
     /** Loads the bus-count-per-day for the given month and refreshes the calendar. */
@@ -57,6 +63,7 @@ public class HomeController {
     public String addToCart(int scheduleId, int qtyAdult, int qtyChild, boolean isMilitary) {
         try {
             cartService.addToCart(userId, scheduleId, qtyAdult, qtyChild, isMilitary);
+            refreshCartBadge();
             homePanel.showCalendarPanel();
             homePanel.showSuccess("Added to cart!");
             return null;
@@ -65,5 +72,12 @@ public class HomeController {
         } catch (RuntimeException e) {
             return "Could not add to cart: " + e.getMessage();
         }
+    }
+
+    private void refreshCartBadge() {
+        if (cartBadgeUpdater == null) {
+            return;
+        }
+        cartBadgeUpdater.accept(cartService.getCart(userId).size());
     }
 }

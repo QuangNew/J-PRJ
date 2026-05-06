@@ -5,6 +5,7 @@ C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\controller\HistoryC
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\controller\HomeController.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\controller\ProfileController.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\dao\CartDao.java
+C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\dao\ReminderDao.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\dao\ScheduleDao.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\dao\TicketDao.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\dao\UserDao.java
@@ -12,11 +13,13 @@ C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\Main.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\model\Bus.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\model\BusSchedule.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\model\CartItem.java
+C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\model\Reminder.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\model\Route.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\model\Ticket.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\model\User.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\service\AuthService.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\service\CartService.java
+C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\service\ReminderService.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\service\ScheduleService.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\service\TicketService.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\util\DateUtil.java
@@ -26,6 +29,7 @@ C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\util\SessionManager
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\view\auth\LoginPanel.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\view\auth\RegisterPanel.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\view\cart\CartPanel.java
+C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\view\cart\ReminderSetupDialog.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\view\history\HistoryPanel.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\view\home\AddToCartDialog.java
 C:\Dev Language\Works\3. PBL\J-PRJ\src\main\java\com\buseasy\view\home\BusPickerDialog.java

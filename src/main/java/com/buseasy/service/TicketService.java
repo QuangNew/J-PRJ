@@ -31,7 +31,7 @@ public class TicketService {
      *
      * @throws RuntimeException if the cart is empty or a DB error occurs
      */
-    public void checkout(int userId) {
+    public List<Ticket> checkout(int userId) {
         Connection conn = null;
         try {
             conn = DBConnection.getConnection();
@@ -48,6 +48,7 @@ public class TicketService {
             ticketDao.insertAll(conn, tickets);
             cartDao.deleteAllByUserId(conn, userId);
             conn.commit();
+            return tickets;
         } catch (IllegalArgumentException e) {
             rollbackQuietly(conn);
             throw e;

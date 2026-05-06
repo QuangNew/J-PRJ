@@ -90,3 +90,19 @@ CREATE TABLE IF NOT EXISTS tickets (
     FOREIGN KEY (user_id)     REFERENCES users(id),
     FOREIGN KEY (schedule_id) REFERENCES bus_schedules(id)
 );
+
+-- ------------------------------------------------------------
+-- 7. ticket_reminders
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ticket_reminders (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    ticket_id      INT      NOT NULL,
+    user_id        INT      NOT NULL,
+    offset_minutes INT      NOT NULL,
+    remind_at      DATETIME NOT NULL,
+    delivered_at   DATETIME NULL,
+    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_ticket_reminders_ticket_id (ticket_id),
+    FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id)   REFERENCES users(id) ON DELETE CASCADE
+);

@@ -1,9 +1,15 @@
+com\buseasy\model\Reminder.class
 com\buseasy\model\Route.class
 com\buseasy\model\Bus.class
+com\buseasy\view\cart\ReminderSetupDialog.class
 com\buseasy\model\Ticket.class
 com\buseasy\model\CartItem.class
+com\buseasy\service\ReminderService.class
+com\buseasy\view\cart\ReminderSetupDialog$ReminderOption.class
+com\buseasy\service\ReminderService$ReminderSaveResult.class
 com\buseasy\util\PasswordUtil.class
 com\buseasy\util\SessionManager.class
 com\buseasy\model\User.class
 com\buseasy\model\BusSchedule.class
 com\buseasy\config\DBConnection.class
+com\buseasy\dao\ReminderDao.class

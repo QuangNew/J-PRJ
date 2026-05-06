@@ -3,19 +3,24 @@ package com.buseasy.controller;
 import java.util.List;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import com.buseasy.model.CartItem;
+import com.buseasy.model.Ticket;
 import com.buseasy.service.CartService;
+import com.buseasy.service.ReminderService;
 import com.buseasy.service.TicketService;
 import com.buseasy.view.cart.CartPanel;
+import com.buseasy.view.cart.ReminderSetupDialog;
 
 /**
  * Connects CartPanel events to CartService and TicketService.
  */
 public class CartController {
 
-    private final CartService   cartService   = new CartService();
-    private final TicketService ticketService = new TicketService();
+    private final CartService     cartService     = new CartService();
+    private final TicketService   ticketService   = new TicketService();
+    private final ReminderService reminderService = new ReminderService();
 
     private final int      userId;
     private final CartPanel cartPanel;
@@ -85,16 +90,50 @@ public class CartController {
         if (confirm != JOptionPane.YES_OPTION) {
             return;
         }
+
+        List<Ticket> tickets;
         try {
-            ticketService.checkout(userId);
+            tickets = ticketService.checkout(userId);
             loadCart();
-            JOptionPane.showMessageDialog(cartPanel,
-                "Booking successful! Check your History tab.",
-                "Success", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IllegalArgumentException e) {
+            cartPanel.showError(e.getMessage());
+            return;
+        } catch (RuntimeException e) {
+            cartPanel.showError("Checkout failed: " + e.getMessage());
+            return;
+        }
+
+        Integer selectedOffset = ReminderSetupDialog.show(
+            SwingUtilities.getWindowAncestor(cartPanel), tickets);
+
+        try {
+            ReminderService.ReminderSaveResult result = reminderService.saveReminders(userId, tickets, selectedOffset);
+            JOptionPane.showMessageDialog(
+                cartPanel,
+                buildCheckoutMessage(selectedOffset, result),
+                "Success",
+                JOptionPane.INFORMATION_MESSAGE);
         } catch (IllegalArgumentException e) {
             cartPanel.showError(e.getMessage());
         } catch (RuntimeException e) {
-            cartPanel.showError("Checkout failed: " + e.getMessage());
+            JOptionPane.showMessageDialog(
+                cartPanel,
+                "Booking successful, but the reminder could not be saved.",
+                "Booking Complete",
+                JOptionPane.WARNING_MESSAGE);
         }
+    }
+
+    private String buildCheckoutMessage(Integer selectedOffset, ReminderService.ReminderSaveResult result) {
+        if (selectedOffset == null) {
+            return "Booking successful! No reminder was set. Check your History tab.";
+        }
+        if (result.getSkippedCount() == 0) {
+            return "Booking successful! Reminder saved for " + result.getSavedCount()
+                + " ticket(s). Check your History tab.";
+        }
+        return "Booking successful! Reminder saved for " + result.getSavedCount()
+            + " ticket(s), and " + result.getSkippedCount()
+            + " ticket(s) were skipped because the trip is too soon.";
     }
 }
