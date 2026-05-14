@@ -1,5 +1,7 @@
 package com.buseasy;
 
+import java.util.TimeZone;
+
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -25,6 +27,7 @@ public class Main {
     }
 
     private static void startApplication() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
         setSystemLookAndFeel();
 
         MainFrame frame = new MainFrame();

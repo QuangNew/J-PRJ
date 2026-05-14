@@ -38,8 +38,8 @@ public class DBConnection {
             user     = props.getProperty("db.user");
             password = props.getProperty("db.password");
 
-            url = "jdbc:mysql://" + host + ":" + port + "/" + name
-                    + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
+                url = "jdbc:mysql://" + host + ":" + port + "/" + name
+                    + "?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh";
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to load db.properties", e);
