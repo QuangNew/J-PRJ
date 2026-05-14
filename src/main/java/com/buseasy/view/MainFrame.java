@@ -104,7 +104,7 @@ public class MainFrame extends JFrame {
         ProfilePanel profilePanel = new ProfilePanel();
         CartPanel    cartPanel    = new CartPanel();
 
-        HomeController    homeController    = new HomeController(user.getId(), homePanel);
+        HomeController    homeController    = new HomeController(user, homePanel);
         HistoryController historyController = new HistoryController(user.getId(), historyPanel);
         ProfileController profileController = new ProfileController(user, profilePanel);
         CartController    cartController    = new CartController(user.getId(), cartPanel);

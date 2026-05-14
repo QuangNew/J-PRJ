@@ -9,10 +9,13 @@ import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
+import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.text.JTextComponent;
 
@@ -102,6 +105,26 @@ public final class UiTheme {
         box.setFont(BODY);
         box.setForeground(TEXT_SECONDARY);
         box.setFocusPainted(false);
+    }
+
+    public static void styleSpinner(JSpinner spinner) {
+        Dimension size = new Dimension(88, 42);
+        spinner.setFont(BODY);
+        spinner.setForeground(TEXT);
+        spinner.setBackground(SURFACE);
+        spinner.setPreferredSize(size);
+        spinner.setMinimumSize(size);
+        spinner.setBorder(createRoundedBorder(BORDER, 7, 8));
+
+        JComponent editor = spinner.getEditor();
+        if (editor instanceof JSpinner.DefaultEditor defaultEditor) {
+            JFormattedTextField field = defaultEditor.getTextField();
+            field.setFont(HEADING);
+            field.setForeground(TEXT);
+            field.setBackground(SURFACE);
+            field.setHorizontalAlignment(SwingConstants.CENTER);
+            field.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
+        }
     }
 
     public static void styleScrollPane(JScrollPane scrollPane) {

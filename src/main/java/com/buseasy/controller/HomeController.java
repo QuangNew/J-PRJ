@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import com.buseasy.model.BusSchedule;
+import com.buseasy.model.User;
 import com.buseasy.service.CartService;
 import com.buseasy.service.ScheduleService;
 import com.buseasy.view.home.HomePanel;
@@ -19,17 +20,21 @@ public class HomeController {
     private final ScheduleService scheduleService = new ScheduleService();
     private final CartService     cartService     = new CartService();
 
-    private final int       userId;
+    private final User      currentUser;
     private final HomePanel homePanel;
     private Consumer<Integer> cartBadgeUpdater;
 
-    public HomeController(int userId, HomePanel homePanel) {
-        this.userId    = userId;
-        this.homePanel = homePanel;
+    public HomeController(User currentUser, HomePanel homePanel) {
+        this.currentUser = currentUser;
+        this.homePanel   = homePanel;
     }
 
     public void setCartBadgeUpdater(Consumer<Integer> cartBadgeUpdater) {
         this.cartBadgeUpdater = cartBadgeUpdater;
+    }
+
+    public boolean isMilitaryDiscountEligible() {
+        return currentUser.isMilitary();
     }
 
     /** Loads the bus-count-per-day for the given month and refreshes the calendar. */
@@ -62,7 +67,7 @@ public class HomeController {
      */
     public String addToCart(int scheduleId, int qtyAdult, int qtyChild, boolean isMilitary) {
         try {
-            cartService.addToCart(userId, scheduleId, qtyAdult, qtyChild, isMilitary);
+            cartService.addToCart(currentUser.getId(), scheduleId, qtyAdult, qtyChild, isMilitary);
             refreshCartBadge();
             homePanel.showCalendarPanel();
             homePanel.showSuccess("Added to cart!");
@@ -78,6 +83,6 @@ public class HomeController {
         if (cartBadgeUpdater == null) {
             return;
         }
-        cartBadgeUpdater.accept(cartService.getCart(userId).size());
+        cartBadgeUpdater.accept(cartService.getCart(currentUser.getId()).size());
     }
 }

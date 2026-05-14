@@ -1,5 +1,6 @@
 package com.buseasy.view.home;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
@@ -9,6 +10,8 @@ import java.awt.Window;
 import java.text.NumberFormat;
 import java.util.Locale;
 
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
@@ -47,10 +50,11 @@ public class AddToCartDialog extends JDialog {
         super(owner, "Add to Cart", ModalityType.APPLICATION_MODAL);
         this.schedule       = schedule;
         this.homeController = controller;
+        this.militaryBox.setSelected(controller.isMilitaryDiscountEligible());
 
         setLayout(new GridBagLayout());
         getContentPane().setBackground(UiTheme.PAPER);
-        setMinimumSize(new Dimension(440, 380));
+        setMinimumSize(new Dimension(500, 500));
         buildUI();
         updateTotal();
         pack();
@@ -61,6 +65,8 @@ public class AddToCartDialog extends JDialog {
         JPanel card = new JPanel(new GridBagLayout());
         UiTheme.styleSurface(card);
         card.setBorder(UiTheme.createCardBorder());
+        UiTheme.styleSpinner(adultSpinner);
+        UiTheme.styleSpinner(childSpinner);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets    = new Insets(8, 10, 8, 10);
@@ -94,36 +100,30 @@ public class AddToCartDialog extends JDialog {
 
         // Adult qty
         gbc.gridy++;
-        gbc.gridwidth = 1;
-        gbc.weightx   = 0;
-        card.add(createFieldLabel("Adult passengers"), gbc);
-        gbc.gridx = 1; gbc.weightx = 1;
-        card.add(adultSpinner, gbc);
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        gbc.weightx = 1;
+        card.add(createQuantityRow(
+            "Adult passengers",
+            "Standard fare",
+            adultSpinner), gbc);
 
         // Child qty
-        gbc.gridx = 0; gbc.gridy++;
-        gbc.weightx = 0;
-        card.add(createFieldLabel("Child passengers (50% off)"), gbc);
-        gbc.gridx = 1; gbc.weightx = 1;
-        card.add(childSpinner, gbc);
+        gbc.gridy++;
+        card.add(createQuantityRow(
+            "Child passengers",
+            "50% of adult fare",
+            childSpinner), gbc);
 
         // Military checkbox
-        gbc.gridx = 0; gbc.gridy++;
+        gbc.gridy++;
         gbc.gridwidth = 2;
         UiTheme.styleCheckBox(militaryBox);
         card.add(militaryBox, gbc);
 
         // Total
         gbc.gridy++;
-        JLabel totalTextLabel = new JLabel("Estimated total", SwingConstants.CENTER);
-        totalTextLabel.setFont(UiTheme.META);
-        totalTextLabel.setForeground(UiTheme.TEXT_MUTED);
-        card.add(totalTextLabel, gbc);
-        gbc.gridy++;
-        totalLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        totalLabel.setFont(UiTheme.SECTION_TITLE);
-        totalLabel.setForeground(UiTheme.TEXT);
-        card.add(totalLabel, gbc);
+        card.add(createTotalPanel(), gbc);
 
         // Error label
         errorLabel.setForeground(UiTheme.ERROR);
@@ -191,10 +191,48 @@ public class AddToCartDialog extends JDialog {
         new AddToCartDialog(owner, schedule, controller).setVisible(true);
     }
 
-    private JLabel createFieldLabel(String text) {
-        JLabel label = new JLabel(text + ":");
+    private JPanel createQuantityRow(String title, String detail, JSpinner spinner) {
+        JPanel row = new JPanel(new BorderLayout(16, 0));
+        row.setOpaque(true);
+        row.setBackground(UiTheme.SUBTLE);
+        row.setBorder(UiTheme.createRoundedBorder(UiTheme.BORDER, 12, 14));
+
+        JPanel labelStack = new JPanel();
+        labelStack.setOpaque(false);
+        labelStack.setLayout(new BoxLayout(labelStack, BoxLayout.Y_AXIS));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(UiTheme.HEADING);
+        titleLabel.setForeground(UiTheme.TEXT);
+
+        JLabel detailLabel = new JLabel(detail);
+        detailLabel.setFont(UiTheme.CAPTION);
+        detailLabel.setForeground(UiTheme.TEXT_SECONDARY);
+
+        labelStack.add(titleLabel);
+        labelStack.add(detailLabel);
+
+        row.add(labelStack, BorderLayout.CENTER);
+        row.add(spinner, BorderLayout.EAST);
+        return row;
+    }
+
+    private JPanel createTotalPanel() {
+        JPanel panel = new JPanel(new BorderLayout(12, 0));
+        panel.setOpaque(true);
+        panel.setBackground(UiTheme.INK);
+        panel.setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
+
+        JLabel label = new JLabel("Estimated total");
         label.setFont(UiTheme.META);
-        label.setForeground(UiTheme.TEXT_SECONDARY);
-        return label;
+        label.setForeground(UiTheme.HOVER);
+
+        totalLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        totalLabel.setFont(UiTheme.SECTION_TITLE);
+        totalLabel.setForeground(UiTheme.SURFACE);
+
+        panel.add(label, BorderLayout.WEST);
+        panel.add(totalLabel, BorderLayout.EAST);
+        return panel;
     }
 }

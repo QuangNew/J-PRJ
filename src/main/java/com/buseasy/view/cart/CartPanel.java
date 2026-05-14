@@ -161,10 +161,14 @@ public class CartPanel extends JPanel {
 
         JSpinner adultSpinner = new JSpinner(new SpinnerNumberModel(
             Math.max(1, item.getQtyAdult()), 0, 20, 1));
-        adultSpinner.setPreferredSize(new Dimension(55, 30));
+        UiTheme.styleSpinner(adultSpinner);
+        adultSpinner.setPreferredSize(new Dimension(76, 38));
+        adultSpinner.setMinimumSize(new Dimension(76, 38));
         JSpinner childSpinner = new JSpinner(new SpinnerNumberModel(
             Math.max(0, item.getQtyChild()), 0, 20, 1));
-        childSpinner.setPreferredSize(new Dimension(55, 30));
+        UiTheme.styleSpinner(childSpinner);
+        childSpinner.setPreferredSize(new Dimension(76, 38));
+        childSpinner.setMinimumSize(new Dimension(76, 38));
         JCheckBox milBox = new JCheckBox("Military");
         UiTheme.styleCheckBox(milBox);
         milBox.setSelected(item.isMilitary());
