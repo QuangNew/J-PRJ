@@ -21,8 +21,9 @@ import javax.swing.text.JTextComponent;
 
 /**
  * Shared visual tokens and styling helpers for the BusEasy Swing UI.
- * Inspired by VoltAgent's Uber DESIGN.md: bold monochrome surfaces,
- * pill-shaped actions, dense cards, and an 8px spacing rhythm.
+ * Customer screens use the existing monochrome BusEasy style.
+ * Admin screens borrow IBM Carbon traits from VoltAgent's awesome-design-md:
+ * flat tiles, precise borders, and a blue operational accent.
  */
 public final class UiTheme {
 
@@ -35,6 +36,7 @@ public final class UiTheme {
     public static final Color TEXT_SECONDARY = new Color(75, 75, 75);
     public static final Color TEXT_MUTED = new Color(140, 140, 140);
     public static final Color BORDER = new Color(223, 223, 223);
+    public static final Color ADMIN_BLUE = new Color(15, 98, 254);
     public static final Color SUCCESS = new Color(19, 105, 60);
     public static final Color ERROR = new Color(176, 41, 41);
 

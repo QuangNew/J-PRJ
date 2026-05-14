@@ -24,8 +24,15 @@ public class ScheduleService {
      * @return map of { day-of-month → schedule count }
      */
     public Map<Integer, Integer> getMonthOverview(YearMonth month) {
+        return getMonthOverview(month, null, "ALL");
+    }
+
+    /**
+     * Returns the number of active bus schedules per day after applying search/filter criteria.
+     */
+    public Map<Integer, Integer> getMonthOverview(YearMonth month, String searchText, String filterCode) {
         try {
-            return scheduleDao.countPerDayInMonth(month);
+            return scheduleDao.countPerDayInMonth(month, searchText, filterCode);
         } catch (SQLException e) {
             throw new RuntimeException("Failed to load month overview.", e);
         }
@@ -36,10 +43,29 @@ public class ScheduleService {
      * Used to populate the timeline list when a day is clicked.
      */
     public List<BusSchedule> getSchedulesForDay(LocalDate date) {
+        return getSchedulesForDay(date, null, "ALL");
+    }
+
+    /**
+     * Returns all active schedules for a date after applying search/filter criteria.
+     */
+    public List<BusSchedule> getSchedulesForDay(LocalDate date, String searchText, String filterCode) {
         try {
-            return scheduleDao.findByDate(date);
+            return scheduleDao.findByDate(date, searchText, filterCode);
         } catch (SQLException e) {
             throw new RuntimeException("Failed to load schedules for date.", e);
+        }
+    }
+
+    public List<BusSchedule> searchFutureSchedules(String searchText, String filterCode) {
+        String query = searchText == null ? "" : searchText.trim();
+        if (query.isBlank()) {
+            return List.of();
+        }
+        try {
+            return scheduleDao.findFutureMatches(query, filterCode);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to search schedules.", e);
         }
     }
 }

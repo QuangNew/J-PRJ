@@ -22,6 +22,7 @@ import javax.swing.SwingConstants;
 import com.buseasy.controller.HistoryController;
 import com.buseasy.model.Ticket;
 import com.buseasy.util.DateUtil;
+import com.buseasy.util.LanguageManager;
 import com.buseasy.view.UiTheme;
 
 /**
@@ -44,7 +45,7 @@ public class HistoryPanel extends JPanel {
         setOpaque(true);
         setBackground(UiTheme.PAPER);
 
-        JLabel title = new JLabel("My Ticket History", SwingConstants.CENTER);
+        JLabel title = new JLabel(LanguageManager.text("My Ticket History"), SwingConstants.CENTER);
         title.setFont(UiTheme.SECTION_TITLE);
         title.setForeground(UiTheme.TEXT);
         title.setBorder(BorderFactory.createEmptyBorder(16, 0, 12, 0));
@@ -57,8 +58,8 @@ public class HistoryPanel extends JPanel {
         expiredListPanel.setBackground(UiTheme.PAPER);
 
         JTabbedPane subTabs = new JTabbedPane();
-        subTabs.addTab("Valid Tickets",   new JScrollPane(validListPanel));
-        subTabs.addTab("Expired Tickets", new JScrollPane(expiredListPanel));
+        subTabs.addTab(LanguageManager.text("Valid Tickets"),   new JScrollPane(validListPanel));
+        subTabs.addTab(LanguageManager.text("Expired Tickets"), new JScrollPane(expiredListPanel));
         UiTheme.styleTabs(subTabs);
         subTabs.setFont(UiTheme.HEADING);
         UiTheme.styleScrollPane((JScrollPane) subTabs.getComponentAt(0));
@@ -80,8 +81,8 @@ public class HistoryPanel extends JPanel {
      * Populates both sub-tab lists with the provided ticket data.
      */
     public void renderTickets(List<Ticket> validTickets, List<Ticket> expiredTickets) {
-        populateList(validListPanel,   validTickets,   "No upcoming tickets.");
-        populateList(expiredListPanel, expiredTickets, "No past tickets.");
+        populateList(validListPanel,   validTickets,   LanguageManager.text("No upcoming tickets."));
+        populateList(expiredListPanel, expiredTickets, LanguageManager.text("No past tickets."));
     }
 
     public void showError(String message) {
@@ -111,16 +112,16 @@ public class HistoryPanel extends JPanel {
         UiTheme.styleSurface(row);
         row.setBorder(UiTheme.createCardBorder());
 
-        String passengers = ticket.getQtyAdult() + " Adult"
-            + (ticket.getQtyChild() > 0 ? ", " + ticket.getQtyChild() + " Child" : "")
-            + (ticket.isMilitary() ? "  [Military]" : "");
+        String passengers = ticket.getQtyAdult() + " " + LanguageManager.text("Adult")
+            + (ticket.getQtyChild() > 0 ? ", " + ticket.getQtyChild() + " " + LanguageManager.text("Child") : "")
+            + (ticket.isMilitary() ? "  [" + LanguageManager.text("Military") + "]" : "");
 
         JPanel infoPanel = new JPanel(new GridLayout(3, 1));
         infoPanel.setOpaque(false);
         infoPanel.add(boldLabel("#T-" + String.format("%04d", ticket.getId())
             + "  |  " + ticket.getSchedule().getBus().getBusNumber()
             + "  —  " + ticket.getSchedule().getRoute()));
-        infoPanel.add(createMetaLabel("Departs: " + DateUtil.formatDateTime(ticket.getSchedule().getDepartureTime())));
+        infoPanel.add(createMetaLabel(LanguageManager.text("Departs") + ": " + DateUtil.formatDateTime(ticket.getSchedule().getDepartureTime())));
         infoPanel.add(createMetaLabel(passengers));
 
         JLabel priceLabel = new JLabel(
@@ -129,7 +130,7 @@ public class HistoryPanel extends JPanel {
         priceLabel.setFont(UiTheme.HEADING);
         priceLabel.setForeground(UiTheme.TEXT);
 
-        JButton detailButton = new JButton("Detail");
+        JButton detailButton = new JButton(LanguageManager.text("Detail"));
         UiTheme.styleSecondaryButton(detailButton);
         detailButton.addActionListener(e -> showTicketDetail(ticket));
 
@@ -139,14 +140,14 @@ public class HistoryPanel extends JPanel {
 
         JPanel rightPanel;
         if (cancellable) {
-            JButton cancelButton = new JButton("Cancel");
+            JButton cancelButton = new JButton(LanguageManager.text("Cancel"));
             UiTheme.styleSecondaryButton(cancelButton);
             cancelButton.setForeground(UiTheme.ERROR);
             cancelButton.addActionListener(e -> {
                 int choice = javax.swing.JOptionPane.showConfirmDialog(
                     this,
-                    "Cancel ticket #T-" + String.format("%04d", ticket.getId()) + "?\nSeats will be returned.",
-                    "Confirm Cancellation",
+                    LanguageManager.text("Cancel") + " #T-" + String.format("%04d", ticket.getId()) + "?\n" + LanguageManager.text("Seats will be returned."),
+                    LanguageManager.text("Confirm Cancellation"),
                     javax.swing.JOptionPane.YES_NO_OPTION);
                 if (choice == javax.swing.JOptionPane.YES_OPTION && historyController != null) {
                     historyController.cancelTicket(ticket);
@@ -173,20 +174,20 @@ public class HistoryPanel extends JPanel {
     /** Shows full booking detail in a simple information dialog. */
     private void showTicketDetail(Ticket ticket) {
         String details = "<html><b>Ticket #T-" + String.format("%04d", ticket.getId()) + "</b><br>"
-            + "Bus:       " + ticket.getSchedule().getBus().getBusNumber()
+            + LanguageManager.text("Bus") + ":       " + ticket.getSchedule().getBus().getBusNumber()
             + " — " + ticket.getSchedule().getBus().getBusName() + "<br>"
-            + "Route:     " + ticket.getSchedule().getRoute() + "<br>"
-            + "Departs:   " + DateUtil.formatDateTime(ticket.getSchedule().getDepartureTime()) + "<br>"
-            + "Arrives:   " + DateUtil.formatDateTime(ticket.getSchedule().getArrivalTime()) + "<br>"
-            + "Adults:    " + ticket.getQtyAdult() + "<br>"
-            + "Children:  " + ticket.getQtyChild() + "<br>"
-            + "Military:  " + (ticket.isMilitary() ? "Yes" : "No") + "<br>"
-            + "Total:     " + CURRENCY.format((long) ticket.getTotalPrice()) + " VND<br>"
-            + "Purchased: " + DateUtil.formatDateTime(ticket.getPurchasedAt()) + "<br>"
-            + "Status:    " + ticket.getStatus()
+            + LanguageManager.text("Route") + ":     " + ticket.getSchedule().getRoute() + "<br>"
+            + LanguageManager.text("Departs") + ":   " + DateUtil.formatDateTime(ticket.getSchedule().getDepartureTime()) + "<br>"
+            + LanguageManager.text("Arrives") + ":   " + DateUtil.formatDateTime(ticket.getSchedule().getArrivalTime()) + "<br>"
+            + LanguageManager.text("Adults") + ":    " + ticket.getQtyAdult() + "<br>"
+            + LanguageManager.text("Children") + ":  " + ticket.getQtyChild() + "<br>"
+            + LanguageManager.text("Military") + ":  " + (ticket.isMilitary() ? LanguageManager.text("Yes") : LanguageManager.text("No")) + "<br>"
+            + LanguageManager.text("Total") + ":     " + CURRENCY.format((long) ticket.getTotalPrice()) + " VND<br>"
+            + LanguageManager.text("Purchased") + ": " + DateUtil.formatDateTime(ticket.getPurchasedAt()) + "<br>"
+            + LanguageManager.text("Status") + ":    " + ticket.getStatus()
             + "</html>";
 
-        JOptionPane.showMessageDialog(this, details, "Ticket Detail", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, details, LanguageManager.text("Ticket Detail"), JOptionPane.INFORMATION_MESSAGE);
     }
 
     private JLabel boldLabel(String text) {

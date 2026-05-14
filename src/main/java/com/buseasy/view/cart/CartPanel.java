@@ -23,13 +23,16 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 import com.buseasy.controller.CartController;
 import com.buseasy.model.CartItem;
 import com.buseasy.service.CartService;
 import com.buseasy.util.DateUtil;
+import com.buseasy.util.LanguageManager;
 import com.buseasy.util.PriceCalculator;
 import com.buseasy.view.UiTheme;
+import com.buseasy.view.common.MilitaryRequestDialog;
 
 /**
  * Tab 4 — Cart.
@@ -48,16 +51,16 @@ public class CartPanel extends JPanel {
     private final Map<Integer, Double> rowPrices = new HashMap<>();
 
     private final JPanel itemListPanel = new JPanel();
-    private final JLabel totalLabel    = new JLabel("Total: 0 VND", SwingConstants.RIGHT);
+    private final JLabel totalLabel    = new JLabel(LanguageManager.text("Total") + ": 0 VND", SwingConstants.RIGHT);
     private final JLabel errorLabel    = new JLabel(" ", SwingConstants.CENTER);
-    private final JButton checkoutButton = new JButton("Checkout");
+    private final JButton checkoutButton = new JButton(LanguageManager.text("Checkout"));
 
     public CartPanel() {
         setLayout(new BorderLayout(4, 8));
         setOpaque(true);
         setBackground(UiTheme.PAPER);
 
-        JLabel title = new JLabel("My Cart", SwingConstants.CENTER);
+        JLabel title = new JLabel(LanguageManager.text("My Cart"), SwingConstants.CENTER);
         title.setFont(UiTheme.SECTION_TITLE);
         title.setForeground(UiTheme.TEXT);
         title.setBorder(BorderFactory.createEmptyBorder(16, 0, 12, 0));
@@ -110,9 +113,13 @@ public class CartPanel extends JPanel {
         rowPrices.clear();
 
         if (items.isEmpty()) {
-            itemListPanel.add(createEmptyState("Your cart is empty."));
+            itemListPanel.add(createEmptyState(LanguageManager.text("Your cart is empty.")));
         } else {
             for (CartItem item : items) {
+                if (item.isMilitary() && cartController != null && !cartController.canUseMilitaryDiscount()) {
+                    item.setMilitary(false);
+                    cartController.updateItemSilent(item.getId(), item.getQtyAdult(), item.getQtyChild(), false);
+                }
                 double itemTotal = cartService.calculateItemTotal(item);
                 rowPrices.put(item.getId(), itemTotal);
                 itemListPanel.add(buildCartItemRow(item, itemTotal));
@@ -169,16 +176,17 @@ public class CartPanel extends JPanel {
         UiTheme.styleSpinner(childSpinner);
         childSpinner.setPreferredSize(new Dimension(76, 38));
         childSpinner.setMinimumSize(new Dimension(76, 38));
-        JCheckBox milBox = new JCheckBox("Military");
+        JCheckBox milBox = new JCheckBox(LanguageManager.text("Military"));
         UiTheme.styleCheckBox(milBox);
-        milBox.setSelected(item.isMilitary());
+        milBox.setSelected(item.isMilitary()
+            && (cartController == null || cartController.canUseMilitaryDiscount()));
 
         rg.gridx = 0; rg.gridy = 0; rg.gridwidth = 1;
-        rightPanel.add(createMetaLabel("Adult:"), rg);
+        rightPanel.add(createMetaLabel(LanguageManager.text("Adult") + ":"), rg);
         rg.gridx = 1;
         rightPanel.add(adultSpinner, rg);
         rg.gridx = 2;
-        rightPanel.add(createMetaLabel("Child:"), rg);
+        rightPanel.add(createMetaLabel(LanguageManager.text("Child") + ":"), rg);
         rg.gridx = 3;
         rightPanel.add(childSpinner, rg);
         rg.gridx = 4;
@@ -190,7 +198,7 @@ public class CartPanel extends JPanel {
         rg.gridx = 0; rg.gridy = 1; rg.gridwidth = 4;
         rightPanel.add(priceLabel, rg);
 
-        JButton removeButton = new JButton("Remove");
+        JButton removeButton = new JButton(LanguageManager.text("Remove"));
         UiTheme.styleSecondaryButton(removeButton);
         removeButton.addActionListener(e -> {
             if (cartController != null) cartController.removeItem(item.getId());
@@ -214,7 +222,19 @@ public class CartPanel extends JPanel {
         };
         adultSpinner.addChangeListener(e -> recalc.run());
         childSpinner.addChangeListener(e -> recalc.run());
-        milBox.addActionListener(e -> recalc.run());
+        milBox.addActionListener(e -> {
+            if (milBox.isSelected() && cartController != null && !cartController.canUseMilitaryDiscount()) {
+                MilitaryRequestDialog.MilitaryRequestForm form =
+                    MilitaryRequestDialog.show(SwingUtilities.getWindowAncestor(this));
+                if (form != null) {
+                    String error = cartController.submitMilitaryRequest(
+                        form.serviceNumber(), form.unitName(), form.note());
+                    errorLabel.setText(error == null ? LanguageManager.text("military.pending") : error);
+                }
+                milBox.setSelected(false);
+            }
+            recalc.run();
+        });
 
         row.add(infoPanel,  BorderLayout.CENTER);
         row.add(rightPanel, BorderLayout.EAST);
@@ -231,7 +251,7 @@ public class CartPanel extends JPanel {
 
     private void refreshGrandTotal() {
         double total = rowPrices.values().stream().mapToDouble(Double::doubleValue).sum();
-        totalLabel.setText("Total: " + CURRENCY.format((long) total) + " VND");
+        totalLabel.setText(LanguageManager.text("Total") + ": " + CURRENCY.format((long) total) + " VND");
     }
 
     private JPanel buildSouthPanel(JPanel bottomBar) {

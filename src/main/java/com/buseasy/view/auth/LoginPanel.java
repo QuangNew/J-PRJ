@@ -16,6 +16,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import com.buseasy.controller.AuthController;
+import com.buseasy.util.LanguageManager;
 import com.buseasy.view.UiTheme;
 
 /**
@@ -53,18 +54,18 @@ public class LoginPanel extends JPanel {
         gbc.gridwidth = 2;
         gbc.weightx = 1;
 
-        JLabel eyebrow = UiTheme.createEyebrow("URBAN MOBILITY PLATFORM");
+        JLabel eyebrow = UiTheme.createEyebrow(LanguageManager.text("URBAN MOBILITY PLATFORM"));
         eyebrow.setHorizontalAlignment(SwingConstants.CENTER);
         card.add(eyebrow, gbc);
 
         gbc.gridy++;
-        JLabel title = new JLabel("Book your next route in seconds", SwingConstants.CENTER);
+        JLabel title = new JLabel(LanguageManager.text("Book your next route in seconds"), SwingConstants.CENTER);
         title.setFont(UiTheme.DISPLAY);
         title.setForeground(UiTheme.TEXT);
         card.add(title, gbc);
 
         gbc.gridy++;
-        JLabel subtitle = new JLabel("Sign in to browse routes, manage tickets, and check out faster.", SwingConstants.CENTER);
+        JLabel subtitle = new JLabel(LanguageManager.text("Sign in to browse routes, manage tickets, and check out faster."), SwingConstants.CENTER);
         subtitle.setFont(UiTheme.BODY);
         subtitle.setForeground(UiTheme.TEXT_SECONDARY);
         card.add(subtitle, gbc);
@@ -73,7 +74,7 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(20, 8, 8, 8);
         gbc.gridwidth = 1;
         gbc.weightx   = 0;
-        card.add(createFieldLabel("Username"), gbc);
+        card.add(createFieldLabel(LanguageManager.text("Username")), gbc);
         gbc.gridx = 1;
         gbc.weightx = 1;
         UiTheme.styleTextInput(usernameField);
@@ -83,13 +84,13 @@ public class LoginPanel extends JPanel {
         gbc.gridy++;
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.weightx = 0;
-        card.add(createFieldLabel("Password"), gbc);
+        card.add(createFieldLabel(LanguageManager.text("Password")), gbc);
         gbc.gridx = 1;
         gbc.weightx = 1;
         UiTheme.styleTextInput(passwordField);
         card.add(passwordField, gbc);
 
-        JButton loginButton = new JButton("Login");
+        JButton loginButton = new JButton(LanguageManager.text("Login"));
         UiTheme.stylePrimaryButton(loginButton);
         gbc.gridx    = 0;
         gbc.gridy++;
@@ -97,7 +98,7 @@ public class LoginPanel extends JPanel {
         gbc.insets = new Insets(18, 8, 8, 8);
         card.add(loginButton, gbc);
 
-        JButton registerButton = new JButton("Create an account");
+        JButton registerButton = new JButton(LanguageManager.text("Create an account"));
         UiTheme.styleLinkButton(registerButton);
         gbc.gridy++;
         gbc.insets = new Insets(0, 8, 8, 8);

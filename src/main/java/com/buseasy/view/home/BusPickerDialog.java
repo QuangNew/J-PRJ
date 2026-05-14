@@ -16,6 +16,7 @@ import javax.swing.SwingConstants;
 
 import com.buseasy.model.BusSchedule;
 import com.buseasy.util.DateUtil;
+import com.buseasy.util.LanguageManager;
 import com.buseasy.view.UiTheme;
 
 /**
@@ -27,12 +28,12 @@ public class BusPickerDialog extends JDialog {
     private BusSchedule chosenSchedule = null;
 
     private BusPickerDialog(Window owner, List<BusSchedule> schedules) {
-        super(owner, "Choose a Bus", ModalityType.APPLICATION_MODAL);
+        super(owner, LanguageManager.text("Choose a Bus"), ModalityType.APPLICATION_MODAL);
         setLayout(new BorderLayout(8, 8));
         setMinimumSize(new Dimension(420, 300));
         getContentPane().setBackground(UiTheme.PAPER);
 
-        JLabel title = new JLabel("Multiple buses at this time — choose one:", SwingConstants.CENTER);
+        JLabel title = new JLabel(LanguageManager.text("Multiple buses at this time - choose one:"), SwingConstants.CENTER);
         title.setFont(UiTheme.SECTION_TITLE);
         title.setForeground(UiTheme.TEXT);
         title.setBorder(javax.swing.BorderFactory.createEmptyBorder(16, 16, 0, 16));
@@ -48,7 +49,7 @@ public class BusPickerDialog extends JDialog {
             busListPanel.add(Box.createRigidArea(new Dimension(0, 12)));
         }
 
-        JButton cancelButton = new JButton("Cancel");
+        JButton cancelButton = new JButton(LanguageManager.text("Cancel"));
         UiTheme.styleSecondaryButton(cancelButton);
         cancelButton.addActionListener(e -> dispose());
 
@@ -69,7 +70,7 @@ public class BusPickerDialog extends JDialog {
         row.setBorder(UiTheme.createCardBorder());
         String info = schedule.getBus().getBusNumber()
             + "  |  " + schedule.getRoute().toString()
-            + "  |  Departs: " + DateUtil.formatTime(schedule.getDepartureTime())
+            + "  |  " + LanguageManager.text("Departs") + ": " + DateUtil.formatTime(schedule.getDepartureTime())
             + "  |  Seats: " + schedule.getAvailableSeats();
 
         JLabel infoLabel = new JLabel(info);
@@ -77,7 +78,7 @@ public class BusPickerDialog extends JDialog {
         infoLabel.setForeground(UiTheme.TEXT_SECONDARY);
         row.add(infoLabel, BorderLayout.CENTER);
 
-        JButton pickButton = new JButton("Pick this bus");
+        JButton pickButton = new JButton(LanguageManager.text("Pick this bus"));
         UiTheme.stylePrimaryButton(pickButton);
         pickButton.addActionListener(e -> {
             chosenSchedule = schedule;

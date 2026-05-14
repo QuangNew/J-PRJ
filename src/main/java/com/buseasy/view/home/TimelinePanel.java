@@ -22,6 +22,7 @@ import javax.swing.SwingUtilities;
 import com.buseasy.controller.HomeController;
 import com.buseasy.model.BusSchedule;
 import com.buseasy.util.DateUtil;
+import com.buseasy.util.LanguageManager;
 import com.buseasy.view.UiTheme;
 
 /**
@@ -44,7 +45,7 @@ public class TimelinePanel extends JPanel {
         titleLabel.setFont(UiTheme.SECTION_TITLE);
         titleLabel.setForeground(UiTheme.TEXT);
 
-        JButton backButton = new JButton("< Back to Calendar");
+        JButton backButton = new JButton(LanguageManager.text("< Back to Calendar"));
         UiTheme.styleSecondaryButton(backButton);
         backButton.addActionListener(e -> {
             Container parent = getParent();
@@ -79,11 +80,11 @@ public class TimelinePanel extends JPanel {
      * Groups schedules that share the same departure-hour:minute together.
      */
     public void renderSchedules(LocalDate date, List<BusSchedule> schedules) {
-        titleLabel.setText("Schedules on " + DateUtil.formatDate(date));
+        titleLabel.setText(LanguageManager.text("Schedules on") + " " + DateUtil.formatDate(date));
         listPanel.removeAll();
 
         if (schedules.isEmpty()) {
-            listPanel.add(createEmptyState("No departures scheduled for this day."));
+            listPanel.add(createEmptyState(LanguageManager.text("No departures scheduled for this day.")));
         } else {
             // Group by departure time string (HH:mm)
             Map<String, List<BusSchedule>> byTime = groupByDepartureTime(schedules);
@@ -133,7 +134,7 @@ public class TimelinePanel extends JPanel {
         infoLabel.setFont(UiTheme.BODY);
         infoLabel.setForeground(UiTheme.TEXT_SECONDARY);
 
-        JButton selectButton = new JButton("Select >");
+        JButton selectButton = new JButton(LanguageManager.text("Select >"));
         UiTheme.stylePrimaryButton(selectButton);
         selectButton.addActionListener(e -> onSelectClicked(busesAtThisTime));
 

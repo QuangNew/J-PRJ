@@ -79,8 +79,8 @@ public class UserDao {
      * Inserts a new user and sets the generated id on the user object.
      */
     public void insert(User user) throws SQLException {
-        String sql = "INSERT INTO users (username, password_hash, full_name, email, phone, is_military) "
-                   + "VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (username, password_hash, full_name, email, phone, is_military, role) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -90,6 +90,7 @@ public class UserDao {
             stmt.setString(4, user.getEmail());
             stmt.setString(5, user.getPhone());
             stmt.setBoolean(6, user.isMilitary());
+            stmt.setString(7, user.getRole());
             stmt.executeUpdate();
 
             try (ResultSet keys = stmt.getGeneratedKeys()) {
@@ -104,7 +105,7 @@ public class UserDao {
      * Updates the profile fields of an existing user.
      */
     public void update(User user) throws SQLException {
-        String sql = "UPDATE users SET full_name = ?, email = ?, phone = ?, is_military = ? "
+        String sql = "UPDATE users SET full_name = ?, email = ?, phone = ?, is_military = ?, role = ? "
                    + "WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -113,7 +114,18 @@ public class UserDao {
             stmt.setString(2, user.getEmail());
             stmt.setString(3, user.getPhone());
             stmt.setBoolean(4, user.isMilitary());
-            stmt.setInt(5, user.getId());
+            stmt.setString(5, user.getRole());
+            stmt.setInt(6, user.getId());
+            stmt.executeUpdate();
+        }
+    }
+
+    public void updateMilitaryStatus(int userId, boolean isMilitary) throws SQLException {
+        String sql = "UPDATE users SET is_military = ? WHERE id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setBoolean(1, isMilitary);
+            stmt.setInt(2, userId);
             stmt.executeUpdate();
         }
     }
@@ -128,6 +140,7 @@ public class UserDao {
         user.setEmail(rs.getString("email"));
         user.setPhone(rs.getString("phone"));
         user.setMilitary(rs.getBoolean("is_military"));
+        user.setRole(rs.getString("role"));
         Timestamp ts = rs.getTimestamp("created_at");
         if (ts != null) {
             user.setCreatedAt(ts.toLocalDateTime());

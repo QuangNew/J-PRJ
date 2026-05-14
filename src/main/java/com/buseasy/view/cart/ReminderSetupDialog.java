@@ -18,24 +18,25 @@ import javax.swing.SwingConstants;
 
 import com.buseasy.model.Ticket;
 import com.buseasy.util.DateUtil;
+import com.buseasy.util.LanguageManager;
 import com.buseasy.view.UiTheme;
 
 public class ReminderSetupDialog extends JDialog {
 
     private final JComboBox<ReminderOption> optionBox = new JComboBox<>(new ReminderOption[] {
-        new ReminderOption("No reminder", null),
-        new ReminderOption("15 minutes before", 15),
-        new ReminderOption("30 minutes before", 30),
-        new ReminderOption("1 hour before", 60),
-        new ReminderOption("2 hours before", 120),
-        new ReminderOption("1 day before", 1440),
-        new ReminderOption("2 days before", 2880)
+        new ReminderOption(LanguageManager.text("No reminder"), null),
+        new ReminderOption(LanguageManager.text("15 minutes before"), 15),
+        new ReminderOption(LanguageManager.text("30 minutes before"), 30),
+        new ReminderOption(LanguageManager.text("1 hour before"), 60),
+        new ReminderOption(LanguageManager.text("2 hours before"), 120),
+        new ReminderOption(LanguageManager.text("1 day before"), 1440),
+        new ReminderOption(LanguageManager.text("2 days before"), 2880)
     });
 
     private Integer selectedOffset;
 
     private ReminderSetupDialog(Window owner, List<Ticket> tickets) {
-        super(owner, "Set Reminder", ModalityType.APPLICATION_MODAL);
+        super(owner, LanguageManager.text("Set Reminder"), ModalityType.APPLICATION_MODAL);
         setLayout(new GridBagLayout());
         getContentPane().setBackground(UiTheme.PAPER);
         setMinimumSize(new Dimension(520, 420));
@@ -56,18 +57,18 @@ public class ReminderSetupDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        JLabel eyebrow = UiTheme.createEyebrow("BOOKING COMPLETE");
+        JLabel eyebrow = UiTheme.createEyebrow(LanguageManager.text("BOOKING COMPLETE"));
         eyebrow.setHorizontalAlignment(SwingConstants.CENTER);
         card.add(eyebrow, gbc);
 
         gbc.gridy++;
-        JLabel title = new JLabel("Choose a reminder for this checkout", SwingConstants.CENTER);
+        JLabel title = new JLabel(LanguageManager.text("Choose a reminder for this checkout"), SwingConstants.CENTER);
         title.setFont(UiTheme.SECTION_TITLE);
         title.setForeground(UiTheme.TEXT);
         card.add(title, gbc);
 
         gbc.gridy++;
-        JLabel hint = new JLabel("This reminder will apply to all tickets bought just now.", SwingConstants.CENTER);
+        JLabel hint = new JLabel(LanguageManager.text("This reminder will apply to all tickets bought just now."), SwingConstants.CENTER);
         hint.setFont(UiTheme.BODY);
         hint.setForeground(UiTheme.TEXT_SECONDARY);
         card.add(hint, gbc);
@@ -76,7 +77,7 @@ public class ReminderSetupDialog extends JDialog {
         card.add(new JSeparator(), gbc);
 
         gbc.gridy++;
-        JLabel summaryTitle = new JLabel("Purchased tickets");
+        JLabel summaryTitle = new JLabel(LanguageManager.text("Purchased tickets"));
         summaryTitle.setFont(UiTheme.META);
         summaryTitle.setForeground(UiTheme.TEXT_MUTED);
         card.add(summaryTitle, gbc);
@@ -88,7 +89,7 @@ public class ReminderSetupDialog extends JDialog {
         card.add(summary, gbc);
 
         gbc.gridy++;
-        JLabel optionLabel = new JLabel("Reminder time");
+        JLabel optionLabel = new JLabel(LanguageManager.text("Reminder time"));
         optionLabel.setFont(UiTheme.META);
         optionLabel.setForeground(UiTheme.TEXT_MUTED);
         card.add(optionLabel, gbc);
@@ -100,8 +101,8 @@ public class ReminderSetupDialog extends JDialog {
         gbc.gridy++;
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttons.setOpaque(false);
-        JButton skipButton = new JButton("Skip");
-        JButton saveButton = new JButton("Save Reminder");
+        JButton skipButton = new JButton(LanguageManager.text("Skip"));
+        JButton saveButton = new JButton(LanguageManager.text("Save Reminder"));
         UiTheme.styleSecondaryButton(skipButton);
         UiTheme.stylePrimaryButton(saveButton);
         buttons.add(skipButton);

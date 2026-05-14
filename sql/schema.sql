@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
     email         VARCHAR(100) NOT NULL UNIQUE,
     phone         VARCHAR(20),
     is_military   BOOLEAN      NOT NULL DEFAULT FALSE,
+    role          ENUM('USER','ADMIN') NOT NULL DEFAULT 'USER',
     created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -105,4 +106,36 @@ CREATE TABLE IF NOT EXISTS ticket_reminders (
     UNIQUE KEY uq_ticket_reminders_ticket_id (ticket_id),
     FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id)   REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- 8. notifications
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS notifications (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT          NOT NULL,
+    title      VARCHAR(120) NOT NULL,
+    message    TEXT         NOT NULL,
+    type       VARCHAR(40)  NOT NULL DEFAULT 'INFO',
+    is_read    BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ------------------------------------------------------------
+-- 9. military_requests
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS military_requests (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    user_id         INT          NOT NULL,
+    service_number  VARCHAR(60)  NOT NULL,
+    unit_name       VARCHAR(120) NOT NULL,
+    note            TEXT,
+    status          ENUM('PENDING','APPROVED','DENIED') NOT NULL DEFAULT 'PENDING',
+    admin_note      TEXT,
+    reviewed_by     INT NULL,
+    reviewed_at     DATETIME NULL,
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id)     REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
 );

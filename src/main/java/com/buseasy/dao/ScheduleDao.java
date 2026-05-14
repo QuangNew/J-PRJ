@@ -27,21 +27,46 @@ public class ScheduleDao {
      * Returns all ACTIVE schedules whose departure date matches the given date.
      */
     public List<BusSchedule> findByDate(LocalDate date) throws SQLException {
-        String sql = "SELECT s.*, "
-                   + "  b.id AS bus_id, b.bus_number, b.bus_name, b.total_seats, "
-                   + "  r.id AS route_id, r.start_destination, r.end_destination "
-                   + "FROM bus_schedules s "
-                   + "JOIN buses b ON s.bus_id = b.id "
-                   + "JOIN routes r ON s.route_id = r.id "
-                   + "WHERE DATE(s.departure_time) = ? AND s.status = 'ACTIVE' "
-                   + "  AND s.departure_time > NOW() "
-                   + "ORDER BY s.departure_time";
+        return findByDate(date, null, "ALL");
+    }
+
+    /**
+     * Returns all ACTIVE schedules for a date after applying calendar filters.
+     */
+    public List<BusSchedule> findByDate(LocalDate date, String searchText, String filterCode) throws SQLException {
+        StringBuilder sql = new StringBuilder(selectScheduleQuery())
+            .append("WHERE DATE(s.departure_time) = ? AND s.status = 'ACTIVE' ")
+            .append("  AND s.departure_time > NOW() ");
+        List<Object> params = new ArrayList<>();
+        params.add(Date.valueOf(date));
+        appendCalendarFilters(sql, params, searchText, filterCode);
+        sql.append("ORDER BY s.departure_time");
 
         List<BusSchedule> schedules = new ArrayList<>();
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            stmt.setDate(1, Date.valueOf(date));
+            bindParams(stmt, params);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    schedules.add(mapRow(rs));
+                }
+            }
+        }
+        return schedules;
+    }
+
+    public List<BusSchedule> findFutureMatches(String searchText, String filterCode) throws SQLException {
+        StringBuilder sql = new StringBuilder(selectScheduleQuery())
+            .append("WHERE s.status = 'ACTIVE' AND s.departure_time > NOW() ");
+        List<Object> params = new ArrayList<>();
+        appendCalendarFilters(sql, params, searchText, filterCode);
+        sql.append("ORDER BY s.departure_time ASC");
+
+        List<BusSchedule> schedules = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+            bindParams(stmt, params);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     schedules.add(mapRow(rs));
@@ -56,18 +81,32 @@ public class ScheduleDao {
      * Only counts ACTIVE schedules.
      */
     public Map<Integer, Integer> countPerDayInMonth(YearMonth month) throws SQLException {
-        String sql = "SELECT DAY(departure_time) AS day, COUNT(*) AS cnt "
-                   + "FROM bus_schedules "
-                   + "WHERE YEAR(departure_time) = ? AND MONTH(departure_time) = ? "
-                   + "  AND status = 'ACTIVE' AND departure_time > NOW() "
-                   + "GROUP BY DAY(departure_time)";
+        return countPerDayInMonth(month, null, "ALL");
+    }
+
+    /**
+     * Returns a map of { day-of-month -> count-of-schedules } after applying calendar filters.
+     */
+    public Map<Integer, Integer> countPerDayInMonth(YearMonth month, String searchText, String filterCode)
+            throws SQLException {
+        StringBuilder sql = new StringBuilder()
+            .append("SELECT DAY(s.departure_time) AS day, COUNT(*) AS cnt ")
+            .append("FROM bus_schedules s ")
+            .append("JOIN buses b ON s.bus_id = b.id ")
+            .append("JOIN routes r ON s.route_id = r.id ")
+            .append("WHERE YEAR(s.departure_time) = ? AND MONTH(s.departure_time) = ? ")
+            .append("  AND s.status = 'ACTIVE' AND s.departure_time > NOW() ");
+        List<Object> params = new ArrayList<>();
+        params.add(month.getYear());
+        params.add(month.getMonthValue());
+        appendCalendarFilters(sql, params, searchText, filterCode);
+        sql.append("GROUP BY DAY(s.departure_time)");
 
         Map<Integer, Integer> countByDay = new HashMap<>();
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            stmt.setInt(1, month.getYear());
-            stmt.setInt(2, month.getMonthValue());
+            bindParams(stmt, params);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     countByDay.put(rs.getInt("day"), rs.getInt("cnt"));
@@ -83,13 +122,7 @@ public class ScheduleDao {
      * @return the BusSchedule, or null if not found.
      */
     public BusSchedule findById(int id) throws SQLException {
-        String sql = "SELECT s.*, "
-                   + "  b.id AS bus_id, b.bus_number, b.bus_name, b.total_seats, "
-                   + "  r.id AS route_id, r.start_destination, r.end_destination "
-                   + "FROM bus_schedules s "
-                   + "JOIN buses b ON s.bus_id = b.id "
-                   + "JOIN routes r ON s.route_id = r.id "
-                   + "WHERE s.id = ?";
+        String sql = selectScheduleQuery() + "WHERE s.id = ?";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -119,6 +152,50 @@ public class ScheduleDao {
             stmt.setInt(2, scheduleId);
             stmt.setInt(3, seatCount);
             return stmt.executeUpdate() == 1;
+        }
+    }
+
+    private String selectScheduleQuery() {
+        return "SELECT s.*, "
+             + "  b.id AS bus_id, b.bus_number, b.bus_name, b.total_seats, "
+             + "  r.id AS route_id, r.start_destination, r.end_destination "
+             + "FROM bus_schedules s "
+             + "JOIN buses b ON s.bus_id = b.id "
+             + "JOIN routes r ON s.route_id = r.id ";
+    }
+
+    private void appendCalendarFilters(StringBuilder sql, List<Object> params,
+                                       String searchText, String filterCode) {
+        String query = searchText == null ? "" : searchText.trim().toLowerCase();
+        if (!query.isBlank()) {
+            String like = "%" + query + "%";
+            sql.append("AND (LOWER(b.bus_number) LIKE ? ")
+               .append("OR LOWER(b.bus_name) LIKE ? ")
+               .append("OR LOWER(r.start_destination) LIKE ? ")
+               .append("OR LOWER(r.end_destination) LIKE ?) ");
+            params.add(like);
+            params.add(like);
+            params.add(like);
+            params.add(like);
+        }
+
+        if ("AVAILABLE".equalsIgnoreCase(filterCode)) {
+            sql.append("AND s.available_seats > 0 ");
+        } else if ("LOW_SEATS".equalsIgnoreCase(filterCode)) {
+            sql.append("AND s.available_seats BETWEEN 1 AND 5 ");
+        }
+    }
+
+    private void bindParams(PreparedStatement stmt, List<Object> params) throws SQLException {
+        for (int i = 0; i < params.size(); i++) {
+            Object value = params.get(i);
+            if (value instanceof Integer intValue) {
+                stmt.setInt(i + 1, intValue);
+            } else if (value instanceof Date dateValue) {
+                stmt.setDate(i + 1, dateValue);
+            } else {
+                stmt.setString(i + 1, String.valueOf(value));
+            }
         }
     }
 

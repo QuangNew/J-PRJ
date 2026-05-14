@@ -8,8 +8,11 @@ import javax.swing.SwingUtilities;
 import com.buseasy.model.CartItem;
 import com.buseasy.model.Ticket;
 import com.buseasy.service.CartService;
+import com.buseasy.service.MilitaryRequestService;
+import com.buseasy.service.NotificationService;
 import com.buseasy.service.ReminderService;
 import com.buseasy.service.TicketService;
+import com.buseasy.util.LanguageManager;
 import com.buseasy.view.cart.CartPanel;
 import com.buseasy.view.cart.ReminderSetupDialog;
 
@@ -21,6 +24,8 @@ public class CartController {
     private final CartService     cartService     = new CartService();
     private final TicketService   ticketService   = new TicketService();
     private final ReminderService reminderService = new ReminderService();
+    private final MilitaryRequestService militaryRequestService = new MilitaryRequestService();
+    private final NotificationService notificationService = new NotificationService();
 
     private final int      userId;
     private final CartPanel cartPanel;
@@ -71,6 +76,10 @@ public class CartController {
      */
     public void updateItemSilent(int cartItemId, int qtyAdult, int qtyChild, boolean isMilitary) {
         try {
+            if (isMilitary && !canUseMilitaryDiscount()) {
+                cartPanel.showError("Military discount is waiting for admin approval.");
+                return;
+            }
             com.buseasy.model.CartItem item = new com.buseasy.model.CartItem();
             item.setId(cartItemId);
             item.setQtyAdult(qtyAdult);
@@ -79,6 +88,21 @@ public class CartController {
             cartService.updateItem(item);
         } catch (RuntimeException e) {
             cartPanel.showError("Auto-save failed: " + e.getMessage());
+        }
+    }
+
+    public boolean canUseMilitaryDiscount() {
+        return militaryRequestService.isApproved(userId);
+    }
+
+    public String submitMilitaryRequest(String serviceNumber, String unitName, String note) {
+        try {
+            militaryRequestService.submitRequest(userId, serviceNumber, unitName, note);
+            return null;
+        } catch (IllegalArgumentException e) {
+            return e.getMessage();
+        } catch (RuntimeException e) {
+            return "Could not submit military request: " + e.getMessage();
         }
     }
 
@@ -94,12 +118,20 @@ public class CartController {
         List<Ticket> tickets;
         try {
             tickets = ticketService.checkout(userId);
+            notificationService.notifyUser(
+                userId,
+                LanguageManager.text("payment.success"),
+                "Your checkout completed successfully.",
+                "PAYMENT_SUCCESS"
+            );
             loadCart();
         } catch (IllegalArgumentException e) {
             cartPanel.showError(e.getMessage());
+            notifyPaymentFailed(e.getMessage());
             return;
         } catch (RuntimeException e) {
             cartPanel.showError("Checkout failed: " + e.getMessage());
+            notifyPaymentFailed(e.getMessage());
             return;
         }
 
@@ -121,6 +153,19 @@ public class CartController {
                 "Booking successful, but the reminder could not be saved.",
                 "Booking Complete",
                 JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void notifyPaymentFailed(String message) {
+        try {
+            notificationService.notifyUser(
+                userId,
+                LanguageManager.text("payment.failed"),
+                message,
+                "PAYMENT_FAILED"
+            );
+        } catch (RuntimeException ignored) {
+            System.err.println("Payment failure notification could not be saved.");
         }
     }
 

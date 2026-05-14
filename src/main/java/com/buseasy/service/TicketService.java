@@ -24,6 +24,7 @@ public class TicketService {
     private final TicketDao   ticketDao   = new TicketDao();
     private final CartDao     cartDao     = new CartDao();
     private final ScheduleDao scheduleDao = new ScheduleDao();
+    private final MilitaryRequestService militaryRequestService = new MilitaryRequestService();
 
     /**
      * Converts all cart items into tickets, then clears the cart.
@@ -40,6 +41,11 @@ public class TicketService {
             List<CartItem> cartItems = cartDao.findByUserId(conn, userId);
             if (cartItems.isEmpty()) {
                 throw new IllegalArgumentException("Your cart is empty.");
+            }
+            if (cartItems.stream().anyMatch(CartItem::isMilitary)
+                    && !militaryRequestService.isApproved(userId)) {
+                throw new IllegalArgumentException(
+                    "Military discount is waiting for admin approval.");
             }
 
             reserveSeats(conn, cartItems);

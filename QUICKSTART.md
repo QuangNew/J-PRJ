@@ -21,6 +21,7 @@ Open phpMyAdmin (http://localhost/phpmyadmin) or a MySQL CLI, then run:
 ```bash
 mysql -u root -p < sql/schema.sql
 mysql -u root -p < sql/seed.sql
+mysql -u root -p < sql/admin_account.sql
 ```
 
 Or paste the contents of each file directly into phpMyAdmin's SQL tab.
@@ -58,3 +59,4 @@ Or run inside an IDE (IntelliJ IDEA / Eclipse / VS Code with Java Extension Pack
 | alice    | password123 |
 | bob      | password123 |
 | charlie  | password123 |
+| admin    | admin123    |

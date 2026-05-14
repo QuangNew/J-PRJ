@@ -2,8 +2,6 @@ package com.buseasy.view.home;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.awt.Color;
-
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -54,12 +52,22 @@ public class HomePanel extends JPanel {
     public void showTimelinePanel() { cardLayout.show(cardContainer, CARD_TIMELINE); }
 
     public void showError(String message) {
-        statusLabel.setForeground(Color.RED);
+        statusLabel.setForeground(UiTheme.ERROR);
         statusLabel.setText(message);
     }
 
     public void showSuccess(String message) {
-        statusLabel.setForeground(new Color(0, 128, 0));
+        statusLabel.setForeground(UiTheme.SUCCESS);
         statusLabel.setText(message);
+    }
+
+    public void showInfo(String message) {
+        statusLabel.setForeground(UiTheme.TEXT_SECONDARY);
+        statusLabel.setText(message);
+    }
+
+    public void clearStatus() {
+        statusLabel.setForeground(UiTheme.TEXT_SECONDARY);
+        statusLabel.setText(" ");
     }
 }

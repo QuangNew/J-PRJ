@@ -25,8 +25,10 @@ import javax.swing.SwingConstants;
 import com.buseasy.controller.HomeController;
 import com.buseasy.model.BusSchedule;
 import com.buseasy.util.DateUtil;
+import com.buseasy.util.LanguageManager;
 import com.buseasy.util.PriceCalculator;
 import com.buseasy.view.UiTheme;
+import com.buseasy.view.common.MilitaryRequestDialog;
 
 /**
  * Modal dialog where the user sets quantity, passenger type,
@@ -42,12 +44,12 @@ public class AddToCartDialog extends JDialog {
 
     private final JSpinner adultSpinner    = new JSpinner(new SpinnerNumberModel(1, 0, 99, 1));
     private final JSpinner childSpinner    = new JSpinner(new SpinnerNumberModel(0, 0, 99, 1));
-    private final JCheckBox militaryBox    = new JCheckBox("Military discount (20% off)");
+    private final JCheckBox militaryBox    = new JCheckBox(LanguageManager.text("Military discount (20% off)"));
     private final JLabel    totalLabel     = new JLabel("0 VND");
     private final JLabel    errorLabel     = new JLabel(" ");
 
     private AddToCartDialog(Window owner, BusSchedule schedule, HomeController controller) {
-        super(owner, "Add to Cart", ModalityType.APPLICATION_MODAL);
+        super(owner, LanguageManager.text("Add to Cart"), ModalityType.APPLICATION_MODAL);
         this.schedule       = schedule;
         this.homeController = controller;
         this.militaryBox.setSelected(controller.isMilitaryDiscountEligible());
@@ -77,7 +79,7 @@ public class AddToCartDialog extends JDialog {
         gbc.weightx   = 1;
 
         // Header info
-        JLabel eyebrow = UiTheme.createEyebrow("ADD TRIP TO CART");
+        JLabel eyebrow = UiTheme.createEyebrow(LanguageManager.text("ADD TRIP TO CART"));
         eyebrow.setHorizontalAlignment(SwingConstants.CENTER);
         card.add(eyebrow, gbc);
 
@@ -90,7 +92,7 @@ public class AddToCartDialog extends JDialog {
         card.add(busLabel, gbc);
 
         gbc.gridy++;
-        JLabel departureLabel = new JLabel("Departs: " + DateUtil.formatDateTime(schedule.getDepartureTime()), SwingConstants.CENTER);
+        JLabel departureLabel = new JLabel(LanguageManager.text("Departs") + ": " + DateUtil.formatDateTime(schedule.getDepartureTime()), SwingConstants.CENTER);
         departureLabel.setFont(UiTheme.BODY);
         departureLabel.setForeground(UiTheme.TEXT_SECONDARY);
         card.add(departureLabel, gbc);
@@ -104,15 +106,15 @@ public class AddToCartDialog extends JDialog {
         gbc.gridwidth = 2;
         gbc.weightx = 1;
         card.add(createQuantityRow(
-            "Adult passengers",
-            "Standard fare",
+            LanguageManager.text("Adult passengers"),
+            LanguageManager.text("Standard fare"),
             adultSpinner), gbc);
 
         // Child qty
         gbc.gridy++;
         card.add(createQuantityRow(
-            "Child passengers",
-            "50% of adult fare",
+            LanguageManager.text("Child passengers"),
+            LanguageManager.text("50% of adult fare"),
             childSpinner), gbc);
 
         // Military checkbox
@@ -135,8 +137,8 @@ public class AddToCartDialog extends JDialog {
         // Buttons
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttons.setOpaque(false);
-        JButton cancelButton = new JButton("Cancel");
-        JButton addButton    = new JButton("Add to Cart");
+        JButton cancelButton = new JButton(LanguageManager.text("Cancel"));
+        JButton addButton    = new JButton(LanguageManager.text("Add to Cart"));
         UiTheme.styleSecondaryButton(cancelButton);
         UiTheme.stylePrimaryButton(addButton);
         buttons.add(cancelButton);
@@ -153,7 +155,7 @@ public class AddToCartDialog extends JDialog {
         // Live price update
         adultSpinner.addChangeListener(e -> updateTotal());
         childSpinner.addChangeListener(e -> updateTotal());
-        militaryBox.addActionListener(e -> updateTotal());
+        militaryBox.addActionListener(e -> onMilitaryToggled());
 
         cancelButton.addActionListener(e -> dispose());
         addButton.addActionListener(e -> onAddClicked());
@@ -173,7 +175,7 @@ public class AddToCartDialog extends JDialog {
         boolean mil = militaryBox.isSelected();
 
         if (adult + child == 0) {
-            errorLabel.setText("Select at least one passenger.");
+            errorLabel.setText(LanguageManager.text("Select at least one passenger."));
             return;
         }
         String error = homeController.addToCart(schedule.getId(), adult, child, mil);
@@ -182,6 +184,27 @@ public class AddToCartDialog extends JDialog {
             return;
         }
         errorLabel.setText(error);
+    }
+
+    private void onMilitaryToggled() {
+        if (!militaryBox.isSelected()) {
+            updateTotal();
+            return;
+        }
+        if (homeController.isMilitaryDiscountEligible()) {
+            updateTotal();
+            return;
+        }
+        MilitaryRequestDialog.MilitaryRequestForm form = MilitaryRequestDialog.show(this);
+        if (form == null) {
+            militaryBox.setSelected(false);
+            updateTotal();
+            return;
+        }
+        String error = homeController.submitMilitaryRequest(form.serviceNumber(), form.unitName(), form.note());
+        militaryBox.setSelected(false);
+        updateTotal();
+        errorLabel.setText(error == null ? LanguageManager.text("military.pending") : error);
     }
 
     /**
@@ -223,7 +246,7 @@ public class AddToCartDialog extends JDialog {
         panel.setBackground(UiTheme.INK);
         panel.setBorder(BorderFactory.createEmptyBorder(14, 18, 14, 18));
 
-        JLabel label = new JLabel("Estimated total");
+        JLabel label = new JLabel(LanguageManager.text("Estimated total"));
         label.setFont(UiTheme.META);
         label.setForeground(UiTheme.HOVER);
 

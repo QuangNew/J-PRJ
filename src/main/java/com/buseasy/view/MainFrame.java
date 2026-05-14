@@ -9,6 +9,7 @@ import java.awt.Font;
 import java.util.List;
 
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -17,15 +18,20 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
 
+import com.buseasy.controller.AdminController;
 import com.buseasy.controller.AuthController;
 import com.buseasy.controller.CartController;
 import com.buseasy.controller.HistoryController;
 import com.buseasy.controller.HomeController;
 import com.buseasy.controller.ProfileController;
+import com.buseasy.model.AppNotification;
 import com.buseasy.model.Reminder;
 import com.buseasy.model.User;
+import com.buseasy.service.NotificationService;
 import com.buseasy.service.ReminderService;
 import com.buseasy.util.DateUtil;
+import com.buseasy.util.LanguageManager;
+import com.buseasy.view.admin.AdminPanel;
 import com.buseasy.view.auth.LoginPanel;
 import com.buseasy.view.auth.RegisterPanel;
 import com.buseasy.view.cart.CartPanel;
@@ -54,10 +60,14 @@ public class MainFrame extends JFrame {
 
     // These are created fresh every time the user logs in
     private JTabbedPane mainTabs;
+    private JPanel currentMainCard;
     private AuthController authController;
     private Timer reminderTimer;
+    private Timer notificationTimer;
+    private JButton notificationButton;
 
     private final ReminderService reminderService = new ReminderService();
+    private final NotificationService notificationService = new NotificationService();
 
     public MainFrame() {
         setTitle("BusEasy — Bus Ticket System");
@@ -79,6 +89,8 @@ public class MainFrame extends JFrame {
     // ----------------------------------------------------------------
 
     public void showLogin() {
+        stopReminderTimer();
+        stopNotificationTimer();
         switchAuthCard("LOGIN");
         rootLayout.show(rootPanel, CARD_AUTH);
     }
@@ -94,10 +106,14 @@ public class MainFrame extends JFrame {
      */
     public void showMainTabs(User user) {
         stopReminderTimer();
+        stopNotificationTimer();
 
-        if (mainTabs != null) {
-            rootPanel.remove(mainTabs.getParent());
+        if (user.isAdmin()) {
+            showAdminWorkspace(user);
+            return;
         }
+
+        removeCurrentMainCard();
 
         HomePanel    homePanel    = new HomePanel();
         HistoryPanel historyPanel = new HistoryPanel();
@@ -115,18 +131,23 @@ public class MainFrame extends JFrame {
         cartPanel.setCartController(cartController);
 
         mainTabs = new JTabbedPane();
-        mainTabs.addTab("Home",    homePanel);
-        mainTabs.addTab("Cart",    cartPanel);
-        mainTabs.addTab("Profile", profilePanel);
-        mainTabs.addTab("History", historyPanel);
+        mainTabs.addTab(LanguageManager.text("home"),    homePanel);
+        mainTabs.addTab(LanguageManager.text("cart"),    cartPanel);
+        mainTabs.addTab(LanguageManager.text("profile"), profilePanel);
+        mainTabs.addTab(LanguageManager.text("history"), historyPanel);
         UiTheme.styleTabs(mainTabs);
 
-        // Set custom tab components so emoji render via Segoe UI Emoji on Windows
-        Font emojiFont = new Font("Segoe UI Emoji", Font.BOLD, 15);
-        String[] tabLabels = { "🏠 Home", "🛒 Cart", "👤 Profile", "🎫 History" };
+        // Custom tab components keep the language switch consistent across rebuilds.
+        Font tabFont = UiTheme.HEADING;
+        String[] tabLabels = {
+            LanguageManager.text("home"),
+            LanguageManager.text("cart"),
+            LanguageManager.text("profile"),
+            LanguageManager.text("history")
+        };
         for (int i = 0; i < tabLabels.length; i++) {
             JLabel lbl = new JLabel(tabLabels[i]);
-            lbl.setFont(emojiFont);
+            lbl.setFont(tabFont);
             JPanel comp = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
             comp.setOpaque(false);
             comp.add(lbl);
@@ -143,8 +164,8 @@ public class MainFrame extends JFrame {
         cartBadge.setHorizontalAlignment(SwingConstants.CENTER);
         cartBadge.setVisible(false);
 
-        JLabel cartTabTitle = new JLabel("🛒 Cart");
-        cartTabTitle.setFont(emojiFont);
+        JLabel cartTabTitle = new JLabel(LanguageManager.text("cart"));
+        cartTabTitle.setFont(tabFont);
         JPanel cartTabComp = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
         cartTabComp.setOpaque(false);
         cartTabComp.add(cartTabTitle);
@@ -171,10 +192,11 @@ public class MainFrame extends JFrame {
             profileController, cartController));
 
         // Logout button in the corner
-        JButton logoutButton = new JButton("Logout");
+        JButton logoutButton = new JButton(LanguageManager.text("logout"));
         UiTheme.styleSecondaryButton(logoutButton);
         logoutButton.addActionListener(e -> {
             stopReminderTimer();
+            stopNotificationTimer();
             if (authController != null) {
                 authController.handleLogout();
             }
@@ -183,10 +205,13 @@ public class MainFrame extends JFrame {
         topBar.setBackground(UiTheme.INK);
         topBar.setBorder(javax.swing.BorderFactory.createEmptyBorder(14, 20, 14, 20));
 
-        JLabel welcomeLabel = new JLabel("Welcome, " + user.getFullName());
+        JLabel welcomeLabel = new JLabel(LanguageManager.text("welcome") + user.getFullName());
         welcomeLabel.setFont(UiTheme.HEADING);
         welcomeLabel.setForeground(Color.WHITE);
 
+        notificationButton = buildNotificationButton(user);
+        topBar.add(buildLanguageSelector(user));
+        topBar.add(notificationButton);
         topBar.add(welcomeLabel);
         topBar.add(logoutButton);
 
@@ -195,17 +220,164 @@ public class MainFrame extends JFrame {
         mainCard.add(topBar,   BorderLayout.NORTH);
         mainCard.add(mainTabs, BorderLayout.CENTER);
 
-        rootPanel.add(mainCard, CARD_MAIN);
+        currentMainCard = mainCard;
+        rootPanel.add(currentMainCard, CARD_MAIN);
         rootLayout.show(rootPanel, CARD_MAIN);
 
         cartController.loadCart();
         homeController.loadMonth(java.time.YearMonth.now());
         startReminderTimer(user);
+        startNotificationTimer(user);
+    }
+
+    private void showAdminWorkspace(User user) {
+        removeCurrentMainCard();
+
+        AdminPanel adminPanel = new AdminPanel();
+        AdminController adminController = new AdminController(user, adminPanel);
+        adminPanel.setAdminController(adminController);
+
+        JButton logoutButton = new JButton(LanguageManager.text("logout"));
+        UiTheme.styleSecondaryButton(logoutButton);
+        logoutButton.addActionListener(e -> {
+            stopReminderTimer();
+            stopNotificationTimer();
+            if (authController != null) {
+                authController.handleLogout();
+            }
+        });
+
+        JPanel topBar = new JPanel(new BorderLayout());
+        topBar.setBackground(UiTheme.INK);
+        topBar.setBorder(javax.swing.BorderFactory.createEmptyBorder(14, 20, 14, 20));
+
+        JLabel titleLabel = new JLabel(LanguageManager.text("admin.console"));
+        titleLabel.setFont(UiTheme.HEADING);
+        titleLabel.setForeground(Color.WHITE);
+
+        JLabel welcomeLabel = new JLabel(LanguageManager.text("welcome") + user.getFullName());
+        welcomeLabel.setFont(UiTheme.BODY);
+        welcomeLabel.setForeground(Color.WHITE);
+
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightPanel.setOpaque(false);
+        notificationButton = buildNotificationButton(user);
+        rightPanel.add(buildLanguageSelector(user));
+        rightPanel.add(notificationButton);
+        rightPanel.add(welcomeLabel);
+        rightPanel.add(logoutButton);
+
+        topBar.add(titleLabel, BorderLayout.WEST);
+        topBar.add(rightPanel, BorderLayout.EAST);
+
+        JPanel mainCard = new JPanel(new BorderLayout());
+        UiTheme.stylePage(mainCard);
+        mainCard.add(topBar, BorderLayout.NORTH);
+        mainCard.add(adminPanel, BorderLayout.CENTER);
+
+        currentMainCard = mainCard;
+        rootPanel.add(currentMainCard, CARD_MAIN);
+        rootLayout.show(rootPanel, CARD_MAIN);
+        adminController.initialize();
+        startNotificationTimer(user);
     }
 
     // ----------------------------------------------------------------
     // Private helpers
     // ----------------------------------------------------------------
+
+    private void removeCurrentMainCard() {
+        stopNotificationTimer();
+        if (currentMainCard == null) {
+            return;
+        }
+        rootPanel.remove(currentMainCard);
+        currentMainCard = null;
+        mainTabs = null;
+    }
+
+    private JButton buildNotificationButton(User user) {
+        JButton button = new JButton();
+        UiTheme.styleSecondaryButton(button);
+        button.addActionListener(e -> showNotifications(user));
+        try {
+            int unread = notificationService.countUnread(user.getId());
+            button.setText(LanguageManager.text("notifications") + " (" + unread + ")");
+        } catch (RuntimeException e) {
+            button.setText(LanguageManager.text("notifications"));
+        }
+        return button;
+    }
+
+    private JComboBox<LanguageManager.Language> buildLanguageSelector(User user) {
+        JComboBox<LanguageManager.Language> languageBox =
+            new JComboBox<>(LanguageManager.Language.values());
+        languageBox.setSelectedItem(LanguageManager.getCurrent());
+        languageBox.setFont(UiTheme.BODY);
+        languageBox.setFocusable(false);
+        languageBox.addActionListener(e -> {
+            LanguageManager.Language selected = (LanguageManager.Language) languageBox.getSelectedItem();
+            if (selected != null && selected != LanguageManager.getCurrent()) {
+                LanguageManager.setCurrent(selected);
+                showMainTabs(user);
+            }
+        });
+        return languageBox;
+    }
+
+    private void startNotificationTimer(User user) {
+        updateNotificationButton(user);
+        notificationTimer = new Timer(15_000, e -> updateNotificationButton(user));
+        notificationTimer.start();
+    }
+
+    private void stopNotificationTimer() {
+        if (notificationTimer == null) {
+            return;
+        }
+        notificationTimer.stop();
+        notificationTimer = null;
+    }
+
+    private void updateNotificationButton(User user) {
+        if (notificationButton == null) {
+            return;
+        }
+        try {
+            int unread = notificationService.countUnread(user.getId());
+            notificationButton.setText(LanguageManager.text("notifications") + " (" + unread + ")");
+        } catch (RuntimeException e) {
+            notificationButton.setText(LanguageManager.text("notifications"));
+        }
+    }
+
+    private void showNotifications(User user) {
+        try {
+            List<AppNotification> notifications = notificationService.getLatest(user.getId());
+            if (notifications.isEmpty()) {
+                JOptionPane.showMessageDialog(this, LanguageManager.text("no.notifications"),
+                    LanguageManager.text("notifications"), JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            StringBuilder message = new StringBuilder();
+            for (AppNotification notification : notifications) {
+                message.append(notification.isRead() ? "" : "* ")
+                    .append(notification.getTitle())
+                    .append("\n")
+                    .append(notification.getMessage())
+                    .append("\n")
+                    .append(notification.getCreatedAt() == null ? "" : DateUtil.formatDateTime(notification.getCreatedAt()))
+                    .append("\n\n");
+            }
+            JOptionPane.showMessageDialog(this, message.toString(),
+                LanguageManager.text("notifications"), JOptionPane.INFORMATION_MESSAGE);
+            notificationService.markAllRead(user.getId());
+            updateNotificationButton(user);
+        } catch (RuntimeException e) {
+            JOptionPane.showMessageDialog(this, "Failed to load notifications: " + e.getMessage(),
+                LanguageManager.text("notifications"), JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     private JPanel buildAuthCard() {
         CardLayout authLayout = new CardLayout();

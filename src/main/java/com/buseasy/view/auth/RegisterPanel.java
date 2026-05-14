@@ -19,6 +19,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
 
 import com.buseasy.controller.AuthController;
+import com.buseasy.util.LanguageManager;
 import com.buseasy.view.UiTheme;
 
 /**
@@ -31,7 +32,7 @@ public class RegisterPanel extends JPanel {
     private final JTextField     fullNameField = new JTextField(20);
     private final JTextField     emailField    = new JTextField(20);
     private final JTextField     phoneField    = new JTextField(20);
-    private final JCheckBox      militaryBox   = new JCheckBox("Military personnel");
+    private final JCheckBox      militaryBox   = new JCheckBox(LanguageManager.text("Military personnel"));
     private final JLabel         errorLabel    = new JLabel(" ");
 
     private AuthController authController;
@@ -60,41 +61,41 @@ public class RegisterPanel extends JPanel {
         gbc.gridy     = 0;
         gbc.weightx   = 1;
 
-        JLabel eyebrow = UiTheme.createEyebrow("FIRST TRIP, ZERO FRICTION");
+        JLabel eyebrow = UiTheme.createEyebrow(LanguageManager.text("FIRST TRIP, ZERO FRICTION"));
         eyebrow.setHorizontalAlignment(SwingConstants.CENTER);
         card.add(eyebrow, gbc);
 
         gbc.gridy++;
-        JLabel title = new JLabel("Create your BusEasy account", SwingConstants.CENTER);
+        JLabel title = new JLabel(LanguageManager.text("Create your BusEasy account"), SwingConstants.CENTER);
         title.setFont(UiTheme.DISPLAY);
         title.setForeground(UiTheme.TEXT);
         card.add(title, gbc);
 
         gbc.gridy++;
-        JLabel subtitle = new JLabel("Save your profile once, then book routes and manage tickets from one place.", SwingConstants.CENTER);
+        JLabel subtitle = new JLabel(LanguageManager.text("Save your profile once, then book routes and manage tickets from one place."), SwingConstants.CENTER);
         subtitle.setFont(UiTheme.BODY);
         subtitle.setForeground(UiTheme.TEXT_SECONDARY);
         card.add(subtitle, gbc);
 
         gbc.insets = new Insets(18, 8, 8, 8);
-        addRow(card, gbc, "Username *",  usernameField);
-        addRow(card, gbc, "Password *",  passwordField);
-        addRow(card, gbc, "Full Name *", fullNameField);
-        addRow(card, gbc, "Email *",     emailField);
-        addRow(card, gbc, "Phone",       phoneField);
+        addRow(card, gbc, LanguageManager.text("Username *"),  usernameField);
+        addRow(card, gbc, LanguageManager.text("Password *"),  passwordField);
+        addRow(card, gbc, LanguageManager.text("Full Name *"), fullNameField);
+        addRow(card, gbc, LanguageManager.text("Email *"),     emailField);
+        addRow(card, gbc, LanguageManager.text("Phone"),       phoneField);
 
         gbc.gridy++;
         gbc.gridwidth = 2;
         UiTheme.styleCheckBox(militaryBox);
         card.add(militaryBox, gbc);
 
-        JButton registerButton = new JButton("Register");
+        JButton registerButton = new JButton(LanguageManager.text("Register"));
         UiTheme.stylePrimaryButton(registerButton);
         gbc.gridy++;
         gbc.insets = new Insets(18, 8, 8, 8);
         card.add(registerButton, gbc);
 
-        JButton backButton = new JButton("Back to login");
+        JButton backButton = new JButton(LanguageManager.text("Back to login"));
         UiTheme.styleLinkButton(backButton);
         gbc.gridy++;
         gbc.insets = new Insets(0, 8, 8, 8);

@@ -13,10 +13,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 import com.buseasy.controller.ProfileController;
+import com.buseasy.model.MilitaryRequest;
 import com.buseasy.model.User;
+import com.buseasy.util.DateUtil;
+import com.buseasy.util.LanguageManager;
 import com.buseasy.view.UiTheme;
+import com.buseasy.view.common.MilitaryRequestDialog;
 
 /**
  * Tab 3 — Profile.
@@ -29,7 +34,8 @@ public class ProfilePanel extends JPanel {
     private final JTextField fullNameField = new JTextField(30);
     private final JTextField emailField    = new JTextField(30);
     private final JTextField phoneField    = new JTextField(30);
-    private final JCheckBox  militaryBox   = new JCheckBox("Military personnel");
+    private final JCheckBox  militaryBox   = new JCheckBox(LanguageManager.text("Military personnel"));
+    private final JLabel     militaryStatusLabel = new JLabel(" ");
     private final JLabel     errorLabel    = new JLabel(" ", SwingConstants.CENTER);
     private final JLabel     successLabel  = new JLabel(" ", SwingConstants.CENTER);
 
@@ -60,6 +66,17 @@ public class ProfilePanel extends JPanel {
         successLabel.setText(" ");
     }
 
+    public void renderMilitaryStatus(MilitaryRequest request) {
+        if (request == null) {
+            militaryStatusLabel.setText(LanguageManager.text("No military request submitted."));
+            return;
+        }
+        String reviewed = request.getReviewedAt() == null
+            ? ""
+            : " | " + DateUtil.formatDateTime(request.getReviewedAt());
+        militaryStatusLabel.setText(LanguageManager.text("Request status") + ": " + request.getStatus() + reviewed);
+    }
+
     public void showError(String message) {
         errorLabel.setText(message);
         successLabel.setText(" ");
@@ -87,12 +104,12 @@ public class ProfilePanel extends JPanel {
         gbc.gridy     = 0;
         gbc.weightx   = 1;
 
-        JLabel eyebrow = UiTheme.createEyebrow("PROFILE SETTINGS");
+        JLabel eyebrow = UiTheme.createEyebrow(LanguageManager.text("PROFILE SETTINGS"));
         eyebrow.setHorizontalAlignment(SwingConstants.CENTER);
         card.add(eyebrow, gbc);
 
         gbc.gridy++;
-        JLabel title = new JLabel("My Profile", SwingConstants.CENTER);
+        JLabel title = new JLabel(LanguageManager.text("My Profile"), SwingConstants.CENTER);
         title.setFont(UiTheme.SECTION_TITLE);
         title.setForeground(UiTheme.TEXT);
         card.add(title, gbc);
@@ -104,17 +121,23 @@ public class ProfilePanel extends JPanel {
         styleField(emailField);
         styleField(phoneField);
 
-        addReadOnlyRow(card, gbc, "Username:", usernameValue);
-        addEditableRow(card, gbc, "Full Name:", fullNameField);
-        addEditableRow(card, gbc, "Email:",     emailField);
-        addEditableRow(card, gbc, "Phone:",     phoneField);
+        addReadOnlyRow(card, gbc, LanguageManager.text("Username:"), usernameValue);
+        addEditableRow(card, gbc, LanguageManager.text("Full Name:"), fullNameField);
+        addEditableRow(card, gbc, LanguageManager.text("Email:"),     emailField);
+        addEditableRow(card, gbc, LanguageManager.text("Phone:"),     phoneField);
 
         gbc.gridy++;
         gbc.gridwidth = 2;
         UiTheme.styleCheckBox(militaryBox);
+        militaryBox.addActionListener(e -> onMilitarySelected());
         card.add(militaryBox, gbc);
 
-        JButton saveButton = new JButton("Save Changes");
+        gbc.gridy++;
+        militaryStatusLabel.setFont(UiTheme.CAPTION);
+        militaryStatusLabel.setForeground(UiTheme.TEXT_SECONDARY);
+        card.add(militaryStatusLabel, gbc);
+
+        JButton saveButton = new JButton(LanguageManager.text("Save Changes"));
         UiTheme.stylePrimaryButton(saveButton);
         saveButton.addActionListener(e -> onSaveClicked());
         gbc.gridy++;
@@ -184,6 +207,25 @@ public class ProfilePanel extends JPanel {
             phoneField.getText().trim(),
             militaryBox.isSelected()
         );
+    }
+
+    private void onMilitarySelected() {
+        if (!militaryBox.isSelected() || profileController == null || profileController.canUseMilitaryDiscount()) {
+            return;
+        }
+        MilitaryRequestDialog.MilitaryRequestForm form =
+            MilitaryRequestDialog.show(SwingUtilities.getWindowAncestor(this));
+        if (form == null) {
+            militaryBox.setSelected(false);
+            return;
+        }
+        String error = profileController.submitMilitaryRequest(form.serviceNumber(), form.unitName(), form.note());
+        militaryBox.setSelected(false);
+        if (error == null) {
+            showSuccess(LanguageManager.text("military.pending"));
+        } else {
+            showError(error);
+        }
     }
 
     private JLabel createFieldLabel(String text) {

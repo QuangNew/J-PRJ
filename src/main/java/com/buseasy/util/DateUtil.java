@@ -27,4 +27,12 @@ public class DateUtil {
     public static String formatTime(LocalDateTime dateTime) {
         return dateTime.format(TIME_FORMAT);
     }
+
+    public static LocalDate parseDate(String value) {
+        return LocalDate.parse(value, DATE_FORMAT);
+    }
+
+    public static LocalDateTime parseDateTime(String value) {
+        return LocalDateTime.parse(value, DATETIME_FORMAT);
+    }
 }

@@ -2,6 +2,8 @@ package com.buseasy.controller;
 
 import com.buseasy.model.User;
 import com.buseasy.service.AuthService;
+import com.buseasy.service.MilitaryRequestService;
+import com.buseasy.util.LanguageManager;
 import com.buseasy.view.profile.ProfilePanel;
 
 /**
@@ -10,12 +12,14 @@ import com.buseasy.view.profile.ProfilePanel;
 public class ProfileController {
 
     private final AuthService  authService;
+    private final MilitaryRequestService militaryRequestService;
     private final ProfilePanel profilePanel;
 
     private final User currentUser;
 
     public ProfileController(User currentUser, ProfilePanel profilePanel) {
         this.authService  = new AuthService();
+        this.militaryRequestService = new MilitaryRequestService();
         this.currentUser  = currentUser;
         this.profilePanel = profilePanel;
     }
@@ -23,15 +27,21 @@ public class ProfileController {
     /** Displays the current user's data in the profile panel. */
     public void loadProfile() {
         profilePanel.renderUser(currentUser);
+        profilePanel.renderMilitaryStatus(militaryRequestService.latestForUser(currentUser.getId()));
     }
 
     /** Saves updated profile fields entered by the user. */
     public void saveProfile(String fullName, String email,
                              String phone, boolean isMilitary) {
         try {
+            boolean approvedMilitary = militaryRequestService.isApproved(currentUser.getId());
+            if (isMilitary && !approvedMilitary) {
+                isMilitary = false;
+            }
             User updatedUser = authService.updateProfile(currentUser, fullName, email, phone, isMilitary);
             applyUpdatedProfile(updatedUser);
             profilePanel.renderUser(currentUser);
+            profilePanel.renderMilitaryStatus(militaryRequestService.latestForUser(currentUser.getId()));
             profilePanel.showSuccess("Profile saved.");
         } catch (IllegalArgumentException e) {
             profilePanel.showError(e.getMessage());
@@ -45,5 +55,21 @@ public class ProfileController {
         currentUser.setEmail(updatedUser.getEmail());
         currentUser.setPhone(updatedUser.getPhone());
         currentUser.setMilitary(updatedUser.isMilitary());
+    }
+
+    public boolean canUseMilitaryDiscount() {
+        return militaryRequestService.isApproved(currentUser.getId());
+    }
+
+    public String submitMilitaryRequest(String serviceNumber, String unitName, String note) {
+        try {
+            militaryRequestService.submitRequest(currentUser.getId(), serviceNumber, unitName, note);
+            profilePanel.renderMilitaryStatus(militaryRequestService.latestForUser(currentUser.getId()));
+            return null;
+        } catch (IllegalArgumentException e) {
+            return e.getMessage();
+        } catch (RuntimeException e) {
+            return "Could not submit military request: " + e.getMessage();
+        }
     }
 }

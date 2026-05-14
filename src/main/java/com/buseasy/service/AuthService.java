@@ -65,6 +65,7 @@ public class AuthService {
             newUser.setEmail(normalizedEmail);
             newUser.setPhone(normalizedPhone);
             newUser.setMilitary(isMilitary);
+            newUser.setRole("USER");
             userDao.insert(newUser);
             return newUser;
         } catch (SQLException e) {
@@ -122,6 +123,7 @@ public class AuthService {
             user.getEmail(),
             user.getPhone(),
             user.isMilitary(),
+            user.getRole(),
             user.getCreatedAt()
         );
     }

@@ -11,13 +11,14 @@ public class User {
     private String email;
     private String phone;
     private boolean isMilitary;
+    private String role = "USER";
     private LocalDateTime createdAt;
 
     public User() {}
 
     public User(int id, String username, String passwordHash,
                 String fullName, String email, String phone,
-                boolean isMilitary, LocalDateTime createdAt) {
+                boolean isMilitary, String role, LocalDateTime createdAt) {
         this.id           = id;
         this.username     = username;
         this.passwordHash = passwordHash;
@@ -25,6 +26,7 @@ public class User {
         this.email        = email;
         this.phone        = phone;
         this.isMilitary   = isMilitary;
+        setRole(role);
         this.createdAt    = createdAt;
     }
 
@@ -49,6 +51,19 @@ public class User {
     public boolean isMilitary()               { return isMilitary; }
     public void setMilitary(boolean military) { this.isMilitary = military; }
 
+    public String getRole()                   { return role; }
+    public void setRole(String role)          { this.role = normalizeRole(role); }
+
+    public boolean isAdmin()                  { return "ADMIN".equalsIgnoreCase(role); }
+
     public LocalDateTime getCreatedAt()                   { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt)     { this.createdAt = createdAt; }
+
+    private String normalizeRole(String value) {
+        if (value == null || value.isBlank()) {
+            return "USER";
+        }
+        String normalized = value.trim().toUpperCase();
+        return "ADMIN".equals(normalized) ? "ADMIN" : "USER";
+    }
 }
